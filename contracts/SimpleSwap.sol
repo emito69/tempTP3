@@ -23,19 +23,29 @@ contract SimpleSwap is Ownable {
     IERC20 public token2;
     LiquidityToken public liquidityToken;
     //uint256 public price;
-    //IERC20 public token3;
 
     constructor(address _token1, address _token2) Ownable(msg.sender) {
         token1 = IERC20(_token1);
         token2 = IERC20(_token2);
         liquidityToken = new LiquidityToken();
-        
+
     }        
 
 
 
-
 /**** FUNCIONES EXTERNAS ****/
+
+
+    // 0 PRUEBA
+
+    function prueba(uint256 _amountUSDT) external {
+        // approve
+        token1.transferFrom(msg.sender, address(this), _amountUSDT);
+    }
+
+    function prueba2() external view returns (uint256 sup1, uint256 sup2){
+        return (token1.totalSupply(), token2.totalSupply());
+    }
 
     // 1
     function addLiquidityaddLiquidity(address tokenA, address tokenB, uint amountADesired, uint amountBDesired, 
