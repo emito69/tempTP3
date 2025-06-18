@@ -3,8 +3,9 @@ pragma solidity ^0.8.27;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./LiquidityToken.sol";
 
-//interface MintableERC20 is IERC20 {
+//interface MintableERC20 is LiquidityToken {
 //    function mint(address to, uint256 amount) external;
 //}
 
@@ -20,12 +21,16 @@ contract SimpleSwap is Ownable {
 
     IERC20 public token1;
     IERC20 public token2;
+    LiquidityToken public liquidityToken;
     //uint256 public price;
+    //IERC20 public token3;
 
-       constructor(address _token1, address _token2) Ownable(msg.sender) {
+    constructor(address _token1, address _token2) Ownable(msg.sender) {
         token1 = IERC20(_token1);
         token2 = IERC20(_token2);
-       }        
+        liquidityToken = new LiquidityToken();
+        
+    }        
 
 
 
