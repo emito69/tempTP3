@@ -1,23 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface MintableERC20 is IERC20 {
-    function mint(address to, uint256 amount) external;
-}
+//interface MintableERC20 is IERC20 {
+//    function mint(address to, uint256 amount) external;
+//}
+
+    struct Person{
+        address id;
+        uint256 amount1;  
+        uint256 amount2;  
+        uint256 liquidity;  
+    }
+
 
 contract SimpleSwap is Ownable {
 
-    ERC20 public token1;
-    ERC20 public token2;
+    IERC20 public token1;
+    IERC20 public token2;
     //uint256 public price;
 
        constructor(address _token1, address _token2) Ownable(msg.sender) {
-        token1 = ERC20(_token1);
-        token2 = ERC20(_token2);
+        token1 = IERC20(_token1);
+        token2 = IERC20(_token2);
        }        
 
 
