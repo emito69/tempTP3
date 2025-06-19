@@ -6,7 +6,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract LiquidityToken is ERC20, Ownable {
-    constructor() ERC20("LiquidityToken", "LTK") Ownable(msg.sender) {
+    constructor(address initialOwner) ERC20("LiquidityToken", "LTK") Ownable(initialOwner) {
     }
 
     function mint(address to, uint256 amount) public onlyOwner {

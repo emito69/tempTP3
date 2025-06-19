@@ -6,7 +6,13 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [],
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "initialOwner",
+						"type": "address"
+					}
+				],
 				"stateMutability": "nonpayable",
 				"type": "constructor"
 			},
@@ -596,11 +602,11 @@
 			]
 		},
 		"contracts/LiquidityToken.sol": {
-			"keccak256": "0x8fa707b5ff73bfe805c89890d611bec15f54219e0ed64b80f67d02a382b3df3d",
+			"keccak256": "0x35207b1f748bf9fc2d4cf5597afa95643146fb763f8a7b2799e96643bf48667c",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://96a560e396922b07a6d3d20ac34e091fa41ff9c66bca49609498ed8b41cfbf7a",
-				"dweb:/ipfs/QmURvNCoVNxLFpQ6pWQ9y1W9NXLNDgsJAdV97x95kBB9cU"
+				"bzz-raw://052b08a8518b55d7451b5923bc37c0aaf1179aee0d6af69662dd2d5f7a642b65",
+				"dweb:/ipfs/QmT5zmiCsgo3AsKgeg4QbmYugVYQysWoDiE8dZatzL2YPb"
 			]
 		}
 	},

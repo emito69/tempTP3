@@ -27,14 +27,13 @@ contract SimpleSwap is Ownable {
     constructor(address _token1, address _token2) Ownable(msg.sender) {
         token1 = IERC20(_token1);
         token2 = IERC20(_token2);
-        liquidityToken = new LiquidityToken();
+        liquidityToken = new LiquidityToken(address(this));
 
-    }        
+    }
 
 
 
 /**** FUNCIONES EXTERNAS ****/
-
 
     // 0 PRUEBA
 
