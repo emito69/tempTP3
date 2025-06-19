@@ -6,18 +6,7 @@
 	"output": {
 		"abi": [
 			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_token1",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_token2",
-						"type": "address"
-					}
-				],
+				"inputs": [],
 				"stateMutability": "nonpayable",
 				"type": "constructor"
 			},
@@ -61,6 +50,59 @@
 				],
 				"name": "OwnershipTransferred",
 				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "_amountIn",
+						"type": "uint256"
+					},
+					{
+						"internalType": "address",
+						"name": "_addressA",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_addressB",
+						"type": "address"
+					}
+				],
+				"name": "_getAmountOut2",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "amountOut",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_addressA",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "_addressB",
+						"type": "address"
+					}
+				],
+				"name": "_getPrice2",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "price",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
 			},
 			{
 				"inputs": [
@@ -180,6 +222,25 @@
 				"type": "function"
 			},
 			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "isToken",
+				"outputs": [
+					{
+						"internalType": "bool",
+						"name": "",
+						"type": "bool"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
 				"inputs": [],
 				"name": "liquidityToken",
 				"outputs": [
@@ -208,28 +269,53 @@
 			{
 				"inputs": [
 					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "personLiquidity",
+				"outputs": [
+					{
 						"internalType": "uint256",
-						"name": "_amountUSDT",
+						"name": "",
 						"type": "uint256"
 					}
 				],
-				"name": "prueba",
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_tokenAddress",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "_amountTk",
+						"type": "uint256"
+					}
+				],
+				"name": "prueba1",
 				"outputs": [],
 				"stateMutability": "nonpayable",
 				"type": "function"
 			},
 			{
-				"inputs": [],
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_tokenAddress",
+						"type": "address"
+					}
+				],
 				"name": "prueba2",
 				"outputs": [
 					{
 						"internalType": "uint256",
-						"name": "sup1",
-						"type": "uint256"
-					},
-					{
-						"internalType": "uint256",
-						"name": "sup2",
+						"name": "reserves",
 						"type": "uint256"
 					}
 				],
@@ -337,21 +423,14 @@
 				"type": "function"
 			},
 			{
-				"inputs": [],
-				"name": "token1",
-				"outputs": [
+				"inputs": [
 					{
-						"internalType": "contract IERC20",
+						"internalType": "address",
 						"name": "",
 						"type": "address"
 					}
 				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [],
-				"name": "token2",
+				"name": "tokensData",
 				"outputs": [
 					{
 						"internalType": "contract IERC20",
@@ -482,11 +561,19 @@
 			]
 		},
 		"contracts/SimpleSwap.sol": {
-			"keccak256": "0xdbb398a82f4360cb992955d1d329a06fecdbea0e13d393b4c909c24a35893fe4",
+			"keccak256": "0xede6acc6769dd7d54ea2949073589cfdc03eb6f02664f38f6c272669f12cfe52",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://4b4a3f3558865c85be80365bd0befdd0304ddab0db494da674491d6eaa18b220",
-				"dweb:/ipfs/QmebsggHBZQ4bt4HvjQj2m374WF9wyavBdjrAW421Pcs5Q"
+				"bzz-raw://8e7336cd8da9877ae846a3721ba1579c56763805687651ae5c1eada7b8f5b704",
+				"dweb:/ipfs/QmeSJXCEn2G2Moeq8aLRpSXTudDPMWABtC5JcyvyGWQo2o"
+			]
+		},
+		"hardhat/console.sol": {
+			"keccak256": "0xf2560b5386574153057104d19a9e68a32ee912cf23c0c8df1fe9a0607f42d543",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a63166e036b040826baa513772451a79925daa304b38749100efb089ac07cdc2",
+				"dweb:/ipfs/QmUtMTxUFKU6a5oFXsEJnTPvb3QPb7GDDmSv5yZ1jFHDwR"
 			]
 		}
 	},
