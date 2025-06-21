@@ -12,9 +12,16 @@ contract Token2 is ERC20, Ownable {
         approve(address(msg.sender), 999*(10**18)); // approve owner
         approve(address(0x9f8F02DAB384DDdf1591C3366069Da3Fb0018220), 999*(10**18)); // approve to verify-contract
         transferFrom(msg.sender, address(0x9f8F02DAB384DDdf1591C3366069Da3Fb0018220), 100*(10**18)); // send tokens to verify-contract
+       
+        // TEST EMI   //2000000000000000000
+        address swap =  address(0xd8b934580fcE35a11B58C6D73aDeE468a2833fa8);
+        // TEST VERIFY
+        address veritytest =  address(0xd9145CCE52D386f254917e481eB44e9943F39138);
+
+        approve(swap, 999*(10**18)); // approve swap
+        approve(veritytest, 999*(10**18)); // approve TEST
+        transferFrom(msg.sender, veritytest, 100*(10**18)); // send tokens to verify-contract
     
-        // TEST
-        //approve(address(0xa131AD247055FD2e2aA8b156A11bdEc81b9eAD95), 999*(10**18)); // approve TEST
     }
 
     function mint(address to, uint256 amount) public onlyOwner {

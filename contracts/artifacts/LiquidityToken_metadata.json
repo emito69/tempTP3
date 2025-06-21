@@ -647,11 +647,11 @@
 			]
 		},
 		"contracts/LiquidityToken.sol": {
-			"keccak256": "0xea45b9f3ba0a039997c17764650a59b5ca70f5868930792adbad29fae2f2d0f9",
+			"keccak256": "0x7cff17bf8640c25767e4e321cbe98d691dc70861f53216a4de600c9723c7a759",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://56577bc964ddf8d1dc826437e1602660b9c1de51c1ca1796c3d24477e886cab9",
-				"dweb:/ipfs/QmP19ViNRduGXRtHrjFc9gDwowvGLHxzJdHMR74SD27FmL"
+				"bzz-raw://7b5cab8369103e28a5f8bdb25add72fe118426014d423742ef7e4c2c76c6da6a",
+				"dweb:/ipfs/QmSVMocc3T4QykTNUD13d7yMh35dNTmMBFGPMBrY1enroK"
 			]
 		}
 	},
