@@ -457,11 +457,11 @@
 			]
 		},
 		"contracts/SimpleSwap.sol": {
-			"keccak256": "0xf69f1f86f830eb931331e03bcdb1e3c31eee7829a5dae31ed2b1225ae3858f0e",
+			"keccak256": "0xd8c26772d8dc60ef61dedeef10ee93312002ca0e4a0988e0b793294f508851c7",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://8980b464d9c9ceefb6de77fb5e749116a3d1a512373de0ff57374c8c2485140e",
-				"dweb:/ipfs/QmaN81WfCmR6tgigz8mEoFFrcfPXB3YTBEesjWZHmDUNZS"
+				"bzz-raw://3e73a9b001cadc199302e32a826b9ba990921578d4437c6770b4e6f7c3006497",
+				"dweb:/ipfs/QmVrNJqkP9mh82kwSdUMBLCcvJP2zAQSZy31D8hfyzG9PY"
 			]
 		},
 		"hardhat/console.sol": {

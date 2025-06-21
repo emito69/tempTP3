@@ -8,7 +8,6 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 
-
 //interface MintableERC20 is LiquidityToken {
 //    function mint(address to, uint256 amount) external;
 //}
@@ -29,8 +28,6 @@ contract SimpleSwap is Ownable {
     mapping (address => bool) private isToken; // default `false`
     mapping (bytes => bool) private isTokensPair; // default `false`
 
-    bool _new = false; 
-
     struct AddLiquidStruct {  // needed to declare this struct to solve "CompilerError: Stack too deep." 
         address tokenA;
         address tokenB;
@@ -45,9 +42,11 @@ contract SimpleSwap is Ownable {
 
     AddLiquidStruct addLiquidStruct;
 
-    uint256 MINIMUM_LIQUIDITY = 1000 wei;
+    uint256 MINIMUM_LIQUIDITY;
 
     constructor() Ownable(msg.sender) {
+        
+        MINIMUM_LIQUIDITY = 1*(10**6);
 
     }
 
@@ -59,7 +58,7 @@ contract SimpleSwap is Ownable {
     function addLiquidity(address tokenA, address tokenB, uint amountADesired, uint amountBDesired, 
                             uint amountAMin, uint amountBMin, address to, uint deadline) external 
                     returns (uint amountA, uint amountB, uint liquidity){
-
+        
         require(tokenA != tokenB, "same tokens");
         //uint256 reserveA;
         //uint256 reserveB;
@@ -87,19 +86,20 @@ contract SimpleSwap is Ownable {
         else{
             key = bytes.concat(addLiquidStruct.temp2, addLiquidStruct.temp1);
         }
-
+        
         if (!isTokensPair[key]) {  //checks if the liquidity pool exists by looking at the pair's key
             isTokensPair[key] = true;
             liqTokensData[key] = new LiquidityToken(address(this));
             amountA = amountADesired;  // For new pools, uses exactly the amounts provided by the user
             amountB = amountBDesired;  // For new pools, uses exactly the amounts provided by the user
                                         // This sets the initial price ratio of the pool
-                
+              
         /// a2) or Existing Pool Calculation 
         }else { 
             // a) Get Current Reserves
             addLiquidStruct.reserveA = tokensData[tokenA].balanceOf(address(this));
             addLiquidStruct.reserveB = tokensData[tokenB].balanceOf(address(this));
+
 
             // b) Calculate Proportional Amounts and Determine Best Ratio
             uint256 amountBProportional = _getProportionalValue(amountADesired, addLiquidStruct.reserveA, addLiquidStruct.reserveB);
@@ -121,19 +121,24 @@ contract SimpleSwap is Ownable {
         // c) Token Transfer
         // approve
         bool statusA = _transferFrom(tokenA, msg.sender, address(this), amountA);
+            if(!statusA){
+                revert ("FAIL TRANSFER FROM TOKEN A TO LIQUIDITY");  
+            }
         
         // approve
         bool statusB = _transferFrom(tokenB, msg.sender, address(this), amountB);
-       
+            if(!statusB){
+                revert ("FAIL TRANSFER FROM TOKEN B TO LIQUIDITY");  
+            }
 
         // d) Calculate equivalent Liquidity Tokens
-
         if (liqTokensData[key].totalSupply() == 0) {
             // √(amountA * amountB) is the geometric mean of the deposited amounts
             // MINIMUM_LIQUIDITY is 1000 wei (burned to prevent division by zero)
             
-            addLiquidStruct.liqTemp = Math.sqrt(amountA*amountB) - MINIMUM_LIQUIDITY;
-
+            liqTokensData[key].mint(address(this), MINIMUM_LIQUIDITY); // initial Liquidity
+            addLiquidStruct.liqTemp = Math.sqrt(amountA*amountB) - MINIMUM_LIQUIDITY; // firts liquidity to emmmit
+            
         }else {
             // min(amountA/reserveA, amountB/reserveB) * total L 
 
@@ -142,23 +147,22 @@ contract SimpleSwap is Ownable {
             //uint256 ratio2 = amountB/reserveB;
             addLiquidStruct.ratio2 = amountB/addLiquidStruct.reserveB;
             //uint256 liqTemp;
-
-
             if (addLiquidStruct.ratio1 <= addLiquidStruct.ratio2) {
                 addLiquidStruct.liqTemp = addLiquidStruct.ratio1 * liqTokensData[key].totalSupply();
             } else{
                 addLiquidStruct.liqTemp = addLiquidStruct.ratio2 * liqTokensData[key].totalSupply();
             }
         }
+        
 
+        require(addLiquidStruct.liqTemp > 0, "INSUFFICIENT_LIQUIDITY");
         // e) Mint Liquidity Tokens
+
         liqTokensData[key].mint(to, addLiquidStruct.liqTemp);
 
         return (amountA, amountB, addLiquidStruct.liqTemp);
 
-
     }
-
 
     // 2
     function removeLiquidity(address tokenA, address tokenB, uint liquidity, uint amountAMin, uint amountBMin, address to, uint deadline) external 
@@ -199,6 +203,7 @@ contract SimpleSwap is Ownable {
         // approve
         bool statusB = _transferFrom(tokenB, address(this), to, amountB);
 
+        return (amountA, amountB);
     }
 
 
@@ -240,7 +245,6 @@ contract SimpleSwap is Ownable {
         amounts[1]= ammountOut;
         
         return amounts;
-
     }
 
 
