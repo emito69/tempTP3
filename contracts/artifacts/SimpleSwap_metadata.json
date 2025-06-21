@@ -38,6 +38,55 @@
 					{
 						"indexed": true,
 						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenA",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenB",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amountA",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amountB",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "liquidity",
+						"type": "uint256"
+					}
+				],
+				"name": "AddLiquidity",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
 						"name": "previousOwner",
 						"type": "address"
 					},
@@ -49,6 +98,86 @@
 					}
 				],
 				"name": "OwnershipTransferred",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenA",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenB",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amountA",
+						"type": "uint256"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256",
+						"name": "amountB",
+						"type": "uint256"
+					}
+				],
+				"name": "RemoveLiquidity",
+				"type": "event"
+			},
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "from",
+						"type": "address"
+					},
+					{
+						"indexed": true,
+						"internalType": "address",
+						"name": "to",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenA",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "tokenB",
+						"type": "address"
+					},
+					{
+						"indexed": false,
+						"internalType": "uint256[]",
+						"name": "amounts",
+						"type": "uint256[]"
+					}
+				],
+				"name": "SwapExactTokensForTokens",
 				"type": "event"
 			},
 			{
@@ -176,54 +305,6 @@
 						"internalType": "address",
 						"name": "",
 						"type": "address"
-					}
-				],
-				"stateMutability": "view",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_addressA",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_addressB",
-						"type": "address"
-					}
-				],
-				"name": "prueba11111",
-				"outputs": [
-					{
-						"internalType": "address[]",
-						"name": "path",
-						"type": "address[]"
-					}
-				],
-				"stateMutability": "nonpayable",
-				"type": "function"
-			},
-			{
-				"inputs": [
-					{
-						"internalType": "address",
-						"name": "_addressA",
-						"type": "address"
-					},
-					{
-						"internalType": "address",
-						"name": "_addressB",
-						"type": "address"
-					}
-				],
-				"name": "pruebaLIQUID1",
-				"outputs": [
-					{
-						"internalType": "uint256",
-						"name": "data",
-						"type": "uint256"
 					}
 				],
 				"stateMutability": "view",
@@ -481,19 +562,11 @@
 			]
 		},
 		"contracts/SimpleSwap.sol": {
-			"keccak256": "0x3801b4254c5697f29730beb09f197eb6a8de356c03c3e1fc774f56205d06001c",
+			"keccak256": "0xc0a849172acbd327a8603691fb356323df26a49f721d19c87cc5e304f8e2c9bd",
 			"license": "MIT",
 			"urls": [
-				"bzz-raw://eed59df036c7e11dec209a060119f048dfb554c922675d1dacdfdedf87f7cacd",
-				"dweb:/ipfs/QmUoPoXehtJcQzGQ4GhLNXW7p5U9imtYanE6tgoPFWt3Qh"
-			]
-		},
-		"hardhat/console.sol": {
-			"keccak256": "0xf2560b5386574153057104d19a9e68a32ee912cf23c0c8df1fe9a0607f42d543",
-			"license": "MIT",
-			"urls": [
-				"bzz-raw://a63166e036b040826baa513772451a79925daa304b38749100efb089ac07cdc2",
-				"dweb:/ipfs/QmUtMTxUFKU6a5oFXsEJnTPvb3QPb7GDDmSv5yZ1jFHDwR"
+				"bzz-raw://46285392cc38ff6292a9dcd7b12ef6f22dcaba94373c7b02070d6b8c485bb17b",
+				"dweb:/ipfs/QmYbpY9RGQMwvH2BYhtUFEYnG9rdDmPue7ageSghCf63m1"
 			]
 		}
 	},

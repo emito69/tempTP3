@@ -4,31 +4,21 @@ pragma solidity ^0.8.27;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./LiquidityToken.sol";
-import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 
-//interface MintableERC20 is LiquidityToken {
-//    function mint(address to, uint256 amount) external;
-//}
-
-
-// VER LOS REQUIREs Y EVENTOS
-// CORREGIRr por cantidad de decimales
-
 contract SimpleSwap is Ownable {
 
-    LiquidityToken private liquidityToken;
- 
     mapping (address => IERC20) private tokensData;  
-    
+
+    LiquidityToken private liquidityToken;
     mapping (bytes => LiquidityToken) private liqTokensData;  
 
     //@notice: Mapping to check if Token already exists in the contrac 
     mapping (address => bool) private isToken; // default `false`
     mapping (bytes => bool) private isTokensPair; // default `false`
 
-    struct AddLiquidStruct {  // needed to declare this struct to solve "CompilerError: Stack too deep." 
+    struct TempStruct {  // needed to declare this struct to solve "CompilerError: Stack too deep." 
         address tokenA;
         address tokenB;
         bytes20 temp1;
@@ -38,31 +28,41 @@ contract SimpleSwap is Ownable {
         uint256 ratio1;
         uint256 ratio2;
         uint256 liqTemp;
-        
+        uint256 amountA;
+        uint256 amountB;
     }
 
-    AddLiquidStruct addLiquidStruct;
+    TempStruct tempStruct;
 
     uint256 MINIMUM_LIQUIDITY;
 
+/****   Modifiers / Requiers   *******/
+
+/****   Events   *******/
+
+    event AddLiquidity(address indexed from, address indexed to, address tokenA, address tokenB, uint amountA, uint amountB, uint liquidity);
+
+    event RemoveLiquidity(address indexed from, address indexed to, address tokenA, address tokenB, uint amountA, uint amountB); 
+
+    event SwapExactTokensForTokens(address indexed from, address indexed to, address tokenA, address tokenB, uint[] amounts); 
+
+/****   CONSTRUCTOR   *******/
     constructor() Ownable(msg.sender) {
-        
         MINIMUM_LIQUIDITY = 1*(10**6);
-
     }
-
-
 
 /**** FUNCIONES EXTERNAS ****/
 
-    // 1
+    // 1 - addLiquidity
     function addLiquidity(address tokenA, address tokenB, uint amountADesired, uint amountBDesired, 
                             uint amountAMin, uint amountBMin, address to, uint deadline) external 
                     returns (uint amountA, uint amountB, uint liquidity){
         
-        require(tokenA != tokenB, "same tokens");
-        //uint256 reserveA;
-        //uint256 reserveB;
+        require((block.timestamp <= deadline),"DEADLINE_PAST");
+        require(tokenA != tokenB, "SAME_TOKENS");
+
+        tempStruct.tokenA = tokenA;
+        tempStruct.tokenB = tokenB;
 
         /// a1) New Pool and TOkens Initialization Check 
         if (!isToken[tokenA]) {
@@ -74,62 +74,56 @@ contract SimpleSwap is Ownable {
                 tokensData[tokenB] = IERC20(tokenB);
         }
 
-        //bytes20 temp1 = bytes20(tokenA);
-        addLiquidStruct.temp1 = bytes20(tokenA);
-        //bytes20 temp2 = bytes20(tokenB);
-        addLiquidStruct.temp2 = bytes20(tokenB);
+        /// a) Check for Existing Pool 
+        tempStruct.temp1 = bytes20(tokenA);
+        tempStruct.temp2 = bytes20(tokenB);
 
         // generate a unique key to identity pairs of tokens
         bytes memory key;
-        if (addLiquidStruct.temp1 >= addLiquidStruct.temp2){
-            key = bytes.concat(addLiquidStruct.temp1, addLiquidStruct.temp2);
-        }
-        else{
-            key = bytes.concat(addLiquidStruct.temp2, addLiquidStruct.temp1);
-        }
+        key = _getKey(tempStruct.temp1, tempStruct.temp2);
         
         if (!isTokensPair[key]) {  //checks if the liquidity pool exists by looking at the pair's key
             isTokensPair[key] = true;
             liqTokensData[key] = new LiquidityToken(address(this));
-            amountA = amountADesired;  // For new pools, uses exactly the amounts provided by the user
-            amountB = amountBDesired;  // For new pools, uses exactly the amounts provided by the user
+            tempStruct.amountA = amountADesired;  // For new pools, uses exactly the amounts provided by the user
+            tempStruct.amountB = amountBDesired;  // For new pools, uses exactly the amounts provided by the user
                                         // This sets the initial price ratio of the pool
               
         /// a2) or Existing Pool Calculation 
         }else { 
             // a) Get Current Reserves
-            addLiquidStruct.reserveA = tokensData[tokenA].balanceOf(address(this));
-            addLiquidStruct.reserveB = tokensData[tokenB].balanceOf(address(this));
-
+            tempStruct.reserveA = tokensData[tokenA].balanceOf(address(this));
+            tempStruct.reserveB = tokensData[tokenB].balanceOf(address(this));
 
             // b) Calculate Proportional Amounts and Determine Best Ratio
-            uint256 amountBProportional = _getProportionalValue(amountADesired, addLiquidStruct.reserveA, addLiquidStruct.reserveB);
-            console.log("amountBProportional: ", amountBProportional);
+            uint256 amountBProportional = _getProportionalValue(amountADesired, tempStruct.reserveA, tempStruct.reserveB);
             if (amountBProportional <= amountBDesired) {
-                require(amountBProportional >= amountBMin, "INSUFFICIENT_B_AMOUNT"); // Slippage Protection
-                amountA = amountADesired;
-                amountB = amountBProportional;
+                require(amountBProportional >= amountBMin, "INSUFF_B_AMOUNT"); // Slippage Protection
+                tempStruct.amountA = amountADesired;
+                tempStruct.amountB = amountBProportional;
             } else {
-                uint amountAProportional = _getProportionalValue(amountBDesired, addLiquidStruct.reserveB, addLiquidStruct.reserveA);
-                console.log("amountAProportional: ", amountAProportional);
+                uint amountAProportional = _getProportionalValue(amountBDesired, tempStruct.reserveB, tempStruct.reserveA);
                 assert(amountAProportional <= amountADesired);
-                require(amountAProportional >= amountAMin, "INSUFFICIENT_A_AMOUNT");  // Slippage Protection
-                amountA = amountAProportional;
-                amountB = amountBDesired;
+                require(amountAProportional >= amountAMin, "INSUFF_A_AMOUNT");  // Slippage Protection
+                tempStruct.amountA = amountAProportional;
+                tempStruct.amountB = amountBDesired;
             }
         }
 
         // c) Token Transfer
-        // approve
-        bool statusA = _transferFrom(tokenA, msg.sender, address(this), amountA);
+
+        // approve - already given by msg.sender
+        // transfer
+        bool statusA = _transferFrom(tokenA, msg.sender, address(this), tempStruct.amountA);
             if(!statusA){
-                revert ("FAIL TRANSFER FROM TOKEN A TO LIQUIDITY");  
+                revert ("FAIL TRANSF TOKEN A");  
             }
         
-        // approve
-        bool statusB = _transferFrom(tokenB, msg.sender, address(this), amountB);
+        // approve - already given by msg.sender
+        // transfer
+        bool statusB = _transferFrom(tokenB, msg.sender, address(this), tempStruct.amountB);
             if(!statusB){
-                revert ("FAIL TRANSFER FROM TOKEN B TO LIQUIDITY");  
+                revert ("FAIL TRANSF TOKEN B");  
             }
 
         // d) Calculate equivalent Liquidity Tokens
@@ -138,63 +132,58 @@ contract SimpleSwap is Ownable {
             // MINIMUM_LIQUIDITY is 1000 wei (burned to prevent division by zero)
             
             liqTokensData[key].mint(address(this), MINIMUM_LIQUIDITY); // initial Liquidity
-            addLiquidStruct.liqTemp = Math.sqrt(amountA*amountB) - MINIMUM_LIQUIDITY; // firts liquidity to emmmit
+            tempStruct.liqTemp = Math.sqrt(tempStruct.amountA*tempStruct.amountB) - MINIMUM_LIQUIDITY; // firts liquidity to emmmit
             
         }else {
             // min(amountA/reserveA, amountB/reserveB) * total L 
 
             //uint256 ratio1 = amountA/reserveA;
-            addLiquidStruct.ratio1 = amountA/addLiquidStruct.reserveA;
+            tempStruct.ratio1 = tempStruct.amountA/tempStruct.reserveA;
             //uint256 ratio2 = amountB/reserveB;
-            addLiquidStruct.ratio2 = amountB/addLiquidStruct.reserveB;
+            tempStruct.ratio2 = tempStruct.amountB/tempStruct.reserveB;
             //uint256 liqTemp;
-            if (addLiquidStruct.ratio1 <= addLiquidStruct.ratio2) {
-                addLiquidStruct.liqTemp = addLiquidStruct.ratio1 * liqTokensData[key].totalSupply();
+            if (tempStruct.ratio1 <= tempStruct.ratio2) {
+                tempStruct.liqTemp = tempStruct.ratio1 * liqTokensData[key].totalSupply();
             } else{
-                addLiquidStruct.liqTemp = addLiquidStruct.ratio2 * liqTokensData[key].totalSupply();
+                tempStruct.liqTemp = tempStruct.ratio2 * liqTokensData[key].totalSupply();
             }
         }
         
-
-        require(addLiquidStruct.liqTemp > 0, "INSUFFICIENT_LIQUIDITY");
+        require(tempStruct.liqTemp > 0, "INSUFF_LIQUIDITY");
         // e) Mint Liquidity Tokens
 
-        liqTokensData[key].mint(to, addLiquidStruct.liqTemp);
+        liqTokensData[key].mint(to, tempStruct.liqTemp);
 
-        return (amountA, amountB, addLiquidStruct.liqTemp);
+        emit AddLiquidity(msg.sender, to, tempStruct.tokenA, tempStruct.tokenB, tempStruct.amountA, tempStruct.amountB, tempStruct.liqTemp);
+
+        return (tempStruct.amountA, tempStruct.amountB, tempStruct.liqTemp);
 
     }
 
-    // 2
+    // 2 - removeLiquidity
     function removeLiquidity(address tokenA, address tokenB, uint liquidity, uint amountAMin, uint amountBMin, address to, uint deadline) external 
                         returns (uint amountA, uint amountB){
+        require((block.timestamp <= deadline),"DEADLINE_PAST");
+        require(tokenA != tokenB, "SAME_TOKENS");
 
         /// a) Check for Existing Pool 
-        //bytes20 temp1 = bytes20(tokenA);
-        addLiquidStruct.temp1 = bytes20(tokenA);
-        //bytes20 temp2 = bytes20(tokenB);
-        addLiquidStruct.temp2 = bytes20(tokenB);
+        tempStruct.temp1 = bytes20(tokenA);
+        tempStruct.temp2 = bytes20(tokenB);
 
         // generate a unique key to identity pairs of tokens
         bytes memory key;
-        if (addLiquidStruct.temp1 >= addLiquidStruct.temp2){
-            key = bytes.concat(addLiquidStruct.temp1, addLiquidStruct.temp2);
-        }
-        else{
-            key = bytes.concat(addLiquidStruct.temp2, addLiquidStruct.temp1);
-        }
+        key = _getKey(tempStruct.temp1, tempStruct.temp2);
 
-        require(isTokensPair[key], "Tokens-pair Pool do not exist");  //checks if the liquidity pool exists by looking at the pair's key              
-        require((liquidity <= liqTokensData[key].balanceOf(msg.sender)), "INSUFFICIENT_LIQUIDITY");
+        require(isTokensPair[key], "NOT_A_TKS_POOL");  //checks if the liquidity pool exists by looking at the pair's key              
+        require((liquidity <= liqTokensData[key].balanceOf(msg.sender)), "INSUFF_LIQUIDITY");
         
-        console.log("EMII BALANCE remove liquidity :", liquidity);
-        
+       
         /// b) Ammount Calculation 
 
         amountA = _getEffectiveLiquidOut(liquidity, tokenA, key);
-        require(amountA >= amountAMin, "LESS_TokenA_THAN_amountAMin");  
+        require(amountA >= amountAMin, "TKA_<_Min");  
         amountB = _getEffectiveLiquidOut(liquidity, tokenB, key);
-        require(amountB >= amountBMin, "LESS_TokenB_THAN_amountBMin");  
+        require(amountB >= amountBMin, "TKB_<_Min");  
 
         // c) Burn Tokens
         liqTokensData[key].burnFrom(msg.sender, liquidity);
@@ -202,103 +191,79 @@ contract SimpleSwap is Ownable {
         // d) Token Transfer
         // approve
         tokensData[tokenA].approve(address(this), amountA);
-
-        console.log("EMII BALANCE remove amountA :", amountA);
-        console.log("EMII BALANCE remove 00000000000A1 :", tokensData[tokenA].balanceOf(address(this)));
-        console.log("EMII BALANCE remove 00000000000A2 :", tokensData[tokenA].allowance(address(this), address(this)));
+        // transfer
         bool statusA = _transferFrom(tokenA, address(this), to, amountA);
         if(!statusA){
-            revert ("FAIL trasnfer TOKEN A to DEST");  
+            revert ("FAIL_trasnf_TKA");  
         }
-
-        console.log("EMII BALANCE remove 00000000000A3 :", tokensData[tokenA].balanceOf(to));
 
         // approve
         tokensData[tokenB].approve(address(this), amountB);
-
-        
-        console.log("EMII BALANCE remove amountB :", amountB);
-        console.log("EMII BALANCE remove 00000000000B1 :", tokensData[tokenB].balanceOf(address(this)));
-        console.log("EMII BALANCE remove 00000000000B2 :", tokensData[tokenB].allowance(address(this), address(this)));
-
+        // transfer
         bool statusB = _transferFrom(tokenB, address(this), to, amountB);
         if(!statusB){
-            revert ("FAIL trasnfer TOKEN B to DEST");  
+            revert ("FAIL_trasnf_TKB");  
         }
 
-        console.log("EMII BALANCE remove 00000000000B3 :", tokensData[tokenB].balanceOf(to));
+        emit RemoveLiquidity(msg.sender, to, tokenA, tokenB, amountA, amountB); 
 
         return (amountA, amountB);
     }
 
 
-    // 3
+    // 3 - swapExactTokensForTokens
     function swapExactTokensForTokens(uint amountIn, uint amountOutMin, address[] calldata path, address to, uint deadline) external 
                                 returns (uint[] memory amounts){
+        require((block.timestamp <= deadline),"DEADLINE_PAST");
+        require(path[0] != path[1], "SAME_TOKENS");
 
         /// a) Check for Existing Pool 
-        addLiquidStruct.tokenA = address(path[0]);
-        //console.log(addLiquidStruct.tokenA);
+        tempStruct.tokenA = path[0];
+        tempStruct.tokenB = path[1];
 
-        addLiquidStruct.tokenB = address(path[1]);
-        //console.log(addLiquidStruct.tokenB);
-
-        //bytes20 temp1 = bytes20(tokenA);
-        addLiquidStruct.temp1 = bytes20(addLiquidStruct.tokenA);
-        //bytes20 temp2 = bytes20(tokenB);
-        addLiquidStruct.temp2 = bytes20(addLiquidStruct.tokenB);
+        tempStruct.temp1 = bytes20(tempStruct.tokenA);
+        tempStruct.temp2 = bytes20(tempStruct.tokenB);
 
         // generate a unique key to identity pairs of tokens
         bytes memory key;
-        if (addLiquidStruct.temp1 >= addLiquidStruct.temp2){
-            key = bytes.concat(addLiquidStruct.temp1, addLiquidStruct.temp2);
-        }
-        else{
-            key = bytes.concat(addLiquidStruct.temp2, addLiquidStruct.temp1);
-        }
+        key = _getKey(tempStruct.temp1, tempStruct.temp2);
 
-        require(isTokensPair[key], "Tokens-pair Pool do not exist");  //checks if the liquidity pool exists by looking at the pair's key              
+        require(isTokensPair[key], "NOT A TKS POOL");  //checks if the liquidity pool exists by looking at the pair's key              
         /// a2) Ammount Calculation 
-        //console.log(addLiquidStruct.tokenA);
-        //console.log(addLiquidStruct.tokenB);
-        uint256 ammountOut = _getEffectiveAmountOut(amountIn, addLiquidStruct.tokenA, addLiquidStruct.tokenB);
-        //console.log("EMIIII AMOUNT OUT: ", ammountOut);
-        require(ammountOut >= amountOutMin, "LESS_TokenB_THAN_amountOutMin");  
+        uint256 ammountOut = _getEffectiveAmountOut(amountIn, tempStruct.tokenA, tempStruct.tokenB);
+        require(ammountOut >= amountOutMin, "TKB_<_Min");  
 
         // c) Token Transfer
-        // approve
-        //tokensData[addLiquidStruct.tokenA].approve(address(this), amountIn);
-        //console.log("EMII BALANCE swappp 00000000000A1:", tokensData[addLiquidStruct.tokenA].balanceOf(msg.sender));
-        bool statusA = _transferFrom(addLiquidStruct.tokenA, msg.sender, address(this), amountIn);
+        // approve - already given by msg.sender
+        // transfer
+        bool statusA = _transferFrom(tempStruct.tokenA, msg.sender, address(this), amountIn);
             if(!statusA){
-                revert ("FAIL trasnfer TOKEN A to CONTRACT");  
-            }
-        //console.log("EMII BALANCE swappp 00000000000A2:", tokensData[addLiquidStruct.tokenA].balanceOf(address(this)));      
+                revert ("FAIL_trasnf_TKA");  
+            }  
 
         // approve
-        tokensData[addLiquidStruct.tokenB].approve(address(this), ammountOut);
-        //console.log("EMII BALANCE swappp 00000000000B1 :", tokensData[addLiquidStruct.tokenB].balanceOf(address(this)));
-        //console.log("EMII BALANCE swappp 00000000000B2 :", tokensData[addLiquidStruct.tokenB].allowance(address(this), address(this)));
-        bool statusB = _transferFrom(addLiquidStruct.tokenB, address(this), to, ammountOut);
+        tokensData[tempStruct.tokenB].approve(address(this), ammountOut);
+        // transfer
+        bool statusB = _transferFrom(tempStruct.tokenB, address(this), to, ammountOut);
             if(!statusB){
-                revert ("FAIL trasnfer TOKEN B to CONTRACT");  
+                revert ("FAIL_trasnf_TKB");  
             }
-
-        //console.log("EMII BALANCE swappp 00000000000B3 :", tokensData[addLiquidStruct.tokenB].balanceOf(to));
 
         uint256[] memory _amounts = new uint256[](2);
         _amounts[0]= amountIn;
         _amounts[1]= ammountOut;
         
+        emit SwapExactTokensForTokens(msg.sender, to, tempStruct.tokenA, tempStruct.tokenB, amounts); 
+
         return amounts;
     }
 
 
-    // 4
+    // 4 - getPrice
     function getPrice(address tokenA, address tokenB) external view 
                 returns (uint256 price){
-        require(isToken[tokenA], "TokenA not in this contract");
-        require(isToken[tokenB], "TokenB not in this contract");
+        require(isToken[tokenA], "TKA_not_VALID");
+        require(isToken[tokenB], "TKB_not_VALID");
         
         //bool areTokens = (isToken[tokenA] && isToken[tokenB]);
         //require(areTokens, "Tokens address not existing in contract");
@@ -308,7 +273,7 @@ contract SimpleSwap is Ownable {
     }
 
 
-    // 5
+    // 5 - getAmountOut
     function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) external pure 
                     returns (uint256 amountOut){
         
@@ -323,7 +288,6 @@ contract SimpleSwap is Ownable {
 
 /**** FUNCIONES AUXILIARES ****/
 
-
     function _getEffectiveAmountOut(uint256 _amountIn, address _addressA, address _addressB) internal view
                     returns (uint256 amountOut){  
         amountOut = (_amountIn * tokensData[_addressB].balanceOf(address(this))) / (tokensData[_addressA].balanceOf(address(this)) + _amountIn);
@@ -332,25 +296,23 @@ contract SimpleSwap is Ownable {
 
     function _getEffectiveLiquidOut(uint256 _liquidity, address _token, bytes memory _key) internal view
                     returns (uint256 amountOut){  
-        // (senderLiquidity / totalSUPPLyL) * tokenRESERVES
+        // (senderLiquidity * tokenRESERVES ) / totalSUPPLyL 
         amountOut =( (_liquidity * tokensData[_token].balanceOf(address(this)) ) / liqTokensData[_key].totalSupply() );
         return amountOut;
     }
-
 
     // To maintain the proportion: amountA / amountB = reserveA / reserveB
     // Implement: (amountADesired * reserveB) / reserveA
     function _getProportionalValue(uint amountA, uint reserveA, uint reserveB) internal pure
                             returns (uint256 proportionalValue){       
-        require(amountA > 0, "INSUFFICIENT_AMOUNT");
-        require(reserveA > 0 && reserveB > 0, "INSUFFICIENT_LIQUIDITY");
+        require(amountA > 0, "INSUFF_AMOUNT_TKA");
+        require(reserveA > 0 && reserveB > 0, "INSUFF_LIQUIDITY");
         proportionalValue = amountA * reserveB / reserveA;  // amountB
     
     }
 
     function _getEffectivePrice(uint256 _amountIn, uint256 _amountOut) internal pure
                         returns (uint256 effectivePrice){
-        //uint256 amountOut = _getAmountOut2(_amountIn, _addressA, _addressB);
         effectivePrice = _amountIn / _amountOut; // quantity of tokenA per tokenB
         return effectivePrice;
     }
@@ -359,54 +321,17 @@ contract SimpleSwap is Ownable {
        return status = tokensData[token].transferFrom(_from, _to, _amount);
     }
 
-    function concatenate(bytes20 x, bytes20 y) internal pure returns (bytes memory) {
-        return abi.encodePacked(x, y);
-    }
-
-    function pruebaLIQUID1(address _addressA, address _addressB) external view returns (uint256 data){
-
-        bytes20 temp1 = bytes20(_addressA);
-        bytes20 temp2 = bytes20(_addressB);
-        // generate a unique key to identity for paris of tokens
-        bytes memory key;
-        if (temp1 >= temp2){
-            key = bytes.concat(temp1, temp2);
+    function _getKey(bytes20 _temp1, bytes20 _temp2) internal pure returns (bytes memory _key) {
+        if (_temp1 >= _temp2){
+            _key = bytes.concat(_temp1, _temp2);
         }
         else{
-            key = bytes.concat(temp2, temp1);
+            _key = bytes.concat(_temp2, _temp1);
         }
-   
-        data = liqTokensData[key].balanceOf(msg.sender);
-        return data;   
     }
 
-    function prueba11111(address _addressA, address _addressB) external 
-            returns (address[] memory path) {
-        bool result = _addressA == _addressB;
-        //console.log("result 1 :", result);
-        
-        result = _addressA != _addressB;
-        //console.log("result 2 :", result);
-
-        isToken[_addressA] = true;
-        isToken[_addressA] = false;
-
-        bool areTokens = (isToken[_addressA] && isToken[_addressB]);
-
-        //console.log("result 3 :", areTokens);
-
-        address[] memory _path = new address[](2);
-        _path[0] = _addressA;
-        _path[1] = _addressB;
-
-        /// a) Check for Existing Pool 
-        //addLiquidStruct.tokenA = _path[0];
-        //addLiquidStruct.tokenB = _path[1];
-
-        console.log("AAAAAAAAAAAAAA :", addLiquidStruct.tokenA == _addressA);
-        console.log("BBBBBBBBBBBBBB :", addLiquidStruct.tokenB == _addressB);
-
-        return _path;
+    function concatenate(bytes20 x, bytes20 y) internal pure returns (bytes memory) {
+        return abi.encodePacked(x, y);
     }
 
 }
